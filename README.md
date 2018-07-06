@@ -1,2 +1,4 @@
 # MAL-Crawler
-A Web Scrapper that can get info off MyAnimeList
+Gets the name, score, synopsis, genre, user_recs, rank of an anime
+Gets and stores the links 
+Gets and stores the anime details in a binary file
