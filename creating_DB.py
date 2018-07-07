@@ -1,10 +1,8 @@
 from tkinter import *
-from tkinter import filedialog, messagebox
 from bs4 import BeautifulSoup
 import requests
 import pickle
 from anime_class import anime_details
-import chardet
 
 completion_count = 1
 genres = ['Action', 'Adventure', 'Cars', 'Comedy', 
