@@ -1,4 +1,3 @@
-
 from tkinter import *
 from bs4 import BeautifulSoup
 import requests
@@ -15,7 +14,8 @@ genres = ['Action', 'Adventure', 'Cars', 'Comedy',
 		'Shoujo', 'Shoujo Ai', 'Shounen', 'Shounen Ai', 
 		'Space', 'Sports', 'Super Power', 'Supernatural', 
 		'Vampire', 'Yaoi', 'Yuri']
-#fn to grab only the links of the top anime pages in MAL
+
+#Fn to grab only the links of the top anime pages in MAL
 def  link_grabber(file, pages):
 	count = 1
 	while count<=pages:
@@ -76,17 +76,15 @@ def parser(url, animes):
 		animes.append(anime)
 	except UnboundLocalError:
 		print("{} is skipped due to missing data". format(title))
-	
-	
 
 def run():
 	#Calling the link grabber fn , args(file to store, number of pages to grab)
-	#opening the file
+	#Opening the file
 	links_file = open('links.txt', 'wb')
 	link_grabber(links_file, 25)
 	links_file.close()
 	
-	#list of objs 
+	#List of objs 
 	animes = []
 	
 	#Loop to parse each grabbed link
@@ -97,7 +95,7 @@ def run():
 	
 	print("completed parsing")
 	
-	#pickling the anime class for offline use
+	#Pickling the anime class for offline use
 	with open("DB.file", "wb") as f:
 		pickle.dump(animes, f, pickle.HIGHEST_PROTOCOL)
 
