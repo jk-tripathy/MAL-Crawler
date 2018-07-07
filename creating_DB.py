@@ -4,8 +4,9 @@ from bs4 import BeautifulSoup
 import requests
 import pickle
 from anime_class import anime_details
+import chardet
 
-
+completion_count = 1
 genres = ['Action', 'Adventure', 'Cars', 'Comedy', 
 		'Demons', 'Drama', 'Ecchi', 'Fantasy',
 		'Harem', 'Hentai', 'Historical', 'Horror'
@@ -32,19 +33,22 @@ def  link_grabber(file, pages):
 				title_link = title.get('href')
 				#print(title_link)
 				try:
-					file.write(str(title_link))
-					file.write('\n')
+
+					file.write(title_link.encode('utf-8'))
+					file.write('\n'.encode('utf-8'))
 				except UnicodeEncodeError:
 					print('{} cannot be formatted properly'. format(title_link))
+		print('page {} links grabbed'.format(count))
 		count +=1
 		
 def parser(url, animes):
+	global completion_count
 	sauce = requests.get(url)
 	plaintxt = sauce.text
 	soup = BeautifulSoup(plaintxt, 'html.parser')
 	
 	for div in soup.findAll('div', {'id':'contentWrapper'}):
-		title = div.find('span', {'itemprop':'name'}).text
+		title = div.find('span', {'itemprop':'name'}).text.encode('utf-8')
 	
 	score = soup.find(title="indicates a weighted score. Please note that 'Not yet aired' titles are excluded.").text
 	synop = soup.find(itemprop='description').text
@@ -58,7 +62,8 @@ def parser(url, animes):
 		#print(user_recs)
 
 	anime_rank = soup.find('span', {'class':'numbers ranked'}).text
-	print("{} anime is done". format(anime_rank))
+	print("{}/1250 parsed". format(completion_count))
+	completion_count += 1
 	try:
 		anime = anime_details(title, score, synop, anime_genre, user_recs, anime_rank)
 		animes.append(anime)
@@ -68,11 +73,11 @@ def parser(url, animes):
 	
 
 def run():
-	
-	links_file = open('links.txt', 'w')
-	link_grabber(links_file, 5)
+	'''
+	links_file = open('links.txt', 'wb')
+	link_grabber(links_file, 25)
 	links_file.close()
-	
+	'''
 	animes = []
 
 	links = open('links.txt', 'r')
@@ -81,10 +86,9 @@ def run():
 	links.close()
 	
 	print("completed parsing")
-
+	
 	with open("DB.file", "wb") as f:
 		pickle.dump(animes, f, pickle.HIGHEST_PROTOCOL)
-	
 
 if __name__ == '__main__':
 	run()
