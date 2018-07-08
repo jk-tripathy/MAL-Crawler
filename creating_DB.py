@@ -17,10 +17,12 @@ genres = ['Action', 'Adventure', 'Cars', 'Comedy',
 		'Space', 'Sports', 'Super Power', 'Supernatural', 
 		'Vampire', 'Yaoi', 'Yuri']
 
+#class to store the grabbed links
 class links:
 	def __init__(self, anime_link):
 		self.anime_link = anime_link
 
+#fn that grabs the link based on start and end pages user provides
 def  link_grabber(all_links, page_start, page_end):
 	count = page_start-1
 	while count < page_end:
@@ -41,7 +43,7 @@ def  link_grabber(all_links, page_start, page_end):
 		print('page {} links grabbed'.format(count+1))
 		count +=1
 	
-		
+#fn that goes through each link and parses the html page giving the anime details		
 def parser(url, animes, total):
 	global count
 	global completion_count
@@ -76,6 +78,7 @@ def parser(url, animes, total):
 
 def run():
 	animes = []
+	#checking id DB is present, if so how many Anime are already present
 	try:
 		with open('DB.file', 'rb') as f:
 			animes = pickle.load(f)
@@ -84,8 +87,11 @@ def run():
 	except FileNotFoundError:
 		print('DB not yet created')
 
+	#user input of the pages to grab
 	start, end = map(int,input('Start page, End Page: ').split())
 	print('Starting link grabber...')
+
+	#calling the link_grabber fn and adding the links to a text file 
 	with open('Links_file.txt', 'ab+') as f:
 		all_links = []
 		link_grabber(all_links, start, end)
@@ -95,11 +101,13 @@ def run():
 			f.write('\n'.encode('utf-8'))
 
 	tot = len(all_links)
+	#parsing the links by calling parser fn
 	for link in all_links:
 		parser(link.anime_link, animes, tot)
 	
 	print("completed parsing")
 	
+	#pickling the anime(appends the anime to DB if it exists)
 	with open("DB.file", "wb") as f:
 		pickle.dump(animes, f, pickle.HIGHEST_PROTOCOL)
 
