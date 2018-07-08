@@ -4,7 +4,9 @@ import requests
 import pickle
 from anime_class import anime_details
 
+
 completion_count = 1
+
 genres = ['Action', 'Adventure', 'Cars', 'Comedy', 
 		'Demons', 'Drama', 'Ecchi', 'Fantasy',
 		'Harem', 'Hentai', 'Historical', 'Horror'
@@ -15,11 +17,14 @@ genres = ['Action', 'Adventure', 'Cars', 'Comedy',
 		'Space', 'Sports', 'Super Power', 'Supernatural', 
 		'Vampire', 'Yaoi', 'Yuri']
 
-#Fn to grab only the links of the top anime pages in MAL
-def  link_grabber(file, pages):
-	count = 1
-	while count<=pages:
-		sauce = requests.get('https://myanimelist.net/topanime.php?limit={}'.format((count-1)*50))
+class links:
+	def __init__(self, anime_link):
+		self.anime_link = anime_link
+
+def  link_grabber(all_links, page_start, page_end):
+	count = page_start-1
+	while count < page_end:
+		sauce = requests.get('https://myanimelist.net/topanime.php?limit={}'.format((count)*50))
 		plaintxt = sauce.text
 		soup = BeautifulSoup(plaintxt, 'html.parser')
 
@@ -31,71 +36,70 @@ def  link_grabber(file, pages):
 				#print(title_text)
 				title_link = title.get('href')
 				#print(title_link)
-				try:
-
-					file.write(title_link.encode('utf-8'))
-					file.write('\n'.encode('utf-8'))
-				except UnicodeEncodeError:
-					print('{} cannot be formatted properly'. format(title_link))
-		print('page {} links grabbed'.format(count))
+				l = links(title_link.encode('utf-8'))
+				all_links.append(l)
+		print('page {} links grabbed'.format(count+1))
 		count +=1
-
-#Fn that parses the html pages grabbed
-def parser(url, animes):
+	
+		
+def parser(url, animes, total):
+	global count
 	global completion_count
 	sauce = requests.get(url)
 	plaintxt = sauce.text
 	soup = BeautifulSoup(plaintxt, 'html.parser')
 	
-	#Gtting the title of the anime
 	for div in soup.findAll('div', {'id':'contentWrapper'}):
 		title = div.find('span', {'itemprop':'name'}).text.encode('utf-8')
 	
-	#Getting the Score and synopsis 
 	score = soup.find(title="indicates a weighted score. Please note that 'Not yet aired' titles are excluded.").text
 	synop = soup.find(itemprop='description').text
-	
-	#Getting the genres
+
 	for genre in soup.findAll(title=genres):
 		anime_genre = genre.get('title')
 		#print(anime_genre)
-	#Getting the user recomendations 
+
 	for recs in soup.findAll('li', {'class':'btn-anime'}):
 		user_recs = recs.get('title')
 		#print(user_recs)
-	#Getting the rank of the anime 
+
 	anime_rank = soup.find('span', {'class':'numbers ranked'}).text
-	
-	#Keeping track of the number of anime details parsed 
-	print("{}/1250 parsed". format(completion_count))
+	print("{}/{} parsed". format(completion_count, total))
 	completion_count += 1
-	
-	#Adding the parsed anime details to the class
 	try:
 		anime = anime_details(title, score, synop, anime_genre, user_recs, anime_rank)
 		animes.append(anime)
 	except UnboundLocalError:
-		print("{} is skipped due to missing data". format(title))
+		print("{} is skipped due to missing data". format(title.decode('utf-8')))
+	
+	
 
 def run():
-	#Calling the link grabber fn , args(file to store, number of pages to grab)
-	#Opening the file
-	links_file = open('links.txt', 'wb')
-	link_grabber(links_file, 25)
-	links_file.close()
-	
-	#List of objs 
 	animes = []
-	
-	#Loop to parse each grabbed link
-	links = open('links.txt', 'r')
-	for url in links.readlines():
-		parser(url, animes)
-	links.close()
+	try:
+		with open('DB.file', 'rb') as f:
+			animes = pickle.load(f)
+			length = len(animes)
+			print('there are curently {} anime in DB'.format(length))
+	except FileNotFoundError:
+		print('DB not yet created')
+
+	start, end = map(int,input('Start page, End Page: ').split())
+	print('Starting link grabber...')
+	with open('Links_file.txt', 'ab+') as f:
+		all_links = []
+		link_grabber(all_links, start, end)
+		print('You have grabbed {} links'.format(len(all_links)))
+		for link in all_links:
+			f.write(link.anime_link)
+			f.write('\n'.encode('utf-8'))
+
+	tot = len(all_links)
+	for link in all_links:
+		parser(link.anime_link, animes, tot)
 	
 	print("completed parsing")
 	
-	#Pickling the anime class for offline use
 	with open("DB.file", "wb") as f:
 		pickle.dump(animes, f, pickle.HIGHEST_PROTOCOL)
 
